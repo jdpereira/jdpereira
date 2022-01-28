@@ -1,0 +1,71 @@
+'''Macro for analysis of intensity on whole sections. Outputs min, max and average intensity.
+'''This macro allows you to select the folder where your images are located, the output for your results, and the function is just splitting channels 
+'''The only thing to set is the channel that has your staining and the threshold, which you will have to pick manually to make sense with your staining.
+
+'''Feel free to edit and refine! Good luck!
+
+'''Select input Directory where images are located'''
+inputDir =getDirectory("Select Input Directory");
+
+'''Select Destination Directory (one slide only)'''
+outputDir1 = getDirectory("Directory where to save .csv files");
+
+list = getFileList(inputDir);
+
+processFolder(inputDir, outputDir1);
+function processFolder(inputDir, outputDir1) {
+list = getFileList(inputDir);
+for (i = 0; i < list.length; i++) {	
+	processFile(inputDir, outputDir1, list[i]);
+	print("Processing");
+		}
+		}
+		function processFile(inputDir, outputDir1, file) {
+	//	for (i = 0; i < list.length; i++) {	
+	//		processFile(inputDir,outputDir, list[i]);
+	//		print("Processing");
+	//	}
+	//	function processFile(inputDir, outputDir, file) {
+	//	for (i = 0; i < list.length; i++){ 
+		open(inputDir + list[i]);
+		name = file;
+		selectWindow(name);
+		id1 = getTitle();
+		setBatchMode(true); '''So, here you can either use BatchMode(true) which means it will run very fast, without opening the images, or false, which will be slower but can come in handy to see what is actually happening.
+		run("Split Channels");
+		selectWindow(id1+" (green)"); ''' If your image has multiple channels, replace with whatever color of channel your staining is in.
+		run("Set Measurements...", "area mean min redirect=None decimal=3");
+		setAutoThreshold("Default dark");
+		run("Threshold...");
+		setThreshold(17, 255); ''' here you have to manually adjust the treshold. I suggest running it outside the macro first, find one you are happy with, then running the same for all of them.
+		'''run("Close");
+		'''close();
+		'''selectWindow(id1+" (green)");
+		run("Analyze Particles...", "pixel show=Outlines display summarize in_situ");
+		saveAs("Results", outputDir1 + id1 + "_Intensity_measurements.csv");  //saves caspase+ DiI+ events, and their area.
+		cleanUp();
+		function cleanUp() {
+    	requires("1.30e");
+    	if (isOpen("Results")) {
+        	selectWindow("Results"); 
+         	run("Close" );
+    	{
+    	if (isOpen("Log")) {
+        	selectWindow("Log");
+         	run("Close" );
+    	}
+    	{
+    	if (isOpen("Threshold")) {
+        	selectWindow("Threshold");
+        	run("Close" );
+    	}
+    	while (nImages()>0) {
+        	selectImage(nImages());  
+        	run("Close");
+    	}
+		}
+    	}
+    	}
+		}
+		setBatchMode(false);
+		}
